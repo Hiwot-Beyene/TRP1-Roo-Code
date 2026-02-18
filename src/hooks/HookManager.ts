@@ -4,7 +4,7 @@
  * Composable and fail-safe: each hook returns a result; no throws for business rules.
  */
 import * as vscode from "vscode"
-import type { MutationClass } from "./orchestration-types"
+import type { MutationClass, PostWriteTraceOpts } from "./orchestration-types"
 import { orchestrationExists, appendClaudeLesson } from "./orchestration-io"
 import { getIntentContext } from "./context/ContextLayer"
 import { appendWriteTrace } from "./correlation/CorrelationService"
@@ -57,14 +57,7 @@ export class HookManager {
 		task: Task,
 		relPath: string,
 		content: string,
-		opts: {
-			intent_id: string
-			mutation_class: MutationClass
-			startLine?: number
-			endLine?: number
-			sessionLogId?: string
-			modelId?: string
-		},
+		opts: PostWriteTraceOpts,
 	): Promise<PostHookResult> {
 		if (!(await orchestrationExists(task.cwd))) return { success: true }
 		try {

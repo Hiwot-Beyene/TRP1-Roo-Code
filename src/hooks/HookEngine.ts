@@ -1,8 +1,9 @@
 /**
- * Hook Engine: public API for the middleware layer. Delegates to HookManager.
- * Tools and host import from here; HookManager holds the implementation.
+ * Hook Engine: public API for the middleware layer. All intent- and write-related
+ * tools MUST call these methods; the middleware fully intercepts the tool flow
+ * (pre-hook before side effect, post-hook after). Delegates to HookManager.
  */
-import type { MutationClass } from "./orchestration-types"
+import type { MutationClass, PostWriteTraceOpts } from "./orchestration-types"
 import type { Task } from "../core/task/Task"
 import { hookManager } from "./HookManager"
 
@@ -19,19 +20,8 @@ export const hookEngine = {
 	preSelectActiveIntent: (cwd: string, intentId: string) => hookManager.preSelectActiveIntent(cwd, intentId),
 	preWriteFile: (task: Task, relPath: string, args: { intent_id?: string; mutation_class?: MutationClass }) =>
 		hookManager.preWriteFile(task, relPath, args),
-	postWriteFile: (
-		task: Task,
-		relPath: string,
-		content: string,
-		opts: {
-			intent_id: string
-			mutation_class: MutationClass
-			startLine?: number
-			endLine?: number
-			sessionLogId?: string
-			modelId?: string
-		},
-	) => hookManager.postWriteFile(task, relPath, content, opts),
+	postWriteFile: (task: Task, relPath: string, content: string, opts: PostWriteTraceOpts) =>
+		hookManager.postWriteFile(task, relPath, content, opts),
 	requestHITLForIntentEvolution: (message: string) => hookManager.requestHITLForIntentEvolution(message),
 	recordLesson: (task: Task, lesson: string) => hookManager.recordLesson(task, lesson),
 	classifyCommand: (cmd: string) => hookManager.classifyCommand(cmd),

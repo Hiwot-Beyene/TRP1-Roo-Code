@@ -27,4 +27,10 @@ export {
 	getClaudePath,
 	orchestrationExists,
 } from "./orchestration-io"
-export type { ActiveIntent, ActiveIntentsDoc, AgentTraceRecord, MutationClass } from "./orchestration-types"
+export type {
+	ActiveIntent,
+	ActiveIntentsDoc,
+	AgentTraceRecord,
+	MutationClass,
+	PostWriteTraceOpts,
+} from "./orchestration-types"
