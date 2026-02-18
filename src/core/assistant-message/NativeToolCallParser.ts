@@ -468,6 +468,8 @@ export class NativeToolCallParser {
 					nativeArgs = {
 						path: partialArgs.path,
 						content: partialArgs.content,
+						intent_id: partialArgs.intent_id,
+						mutation_class: partialArgs.mutation_class,
 					}
 				}
 				break
@@ -537,6 +539,12 @@ export class NativeToolCallParser {
 				}
 				break
 
+			case "select_active_intent":
+				if (partialArgs.intent_id !== undefined) {
+					nativeArgs = { intent_id: partialArgs.intent_id }
+				}
+				break
+
 			case "switch_mode":
 				if (partialArgs.mode_slug !== undefined || partialArgs.reason !== undefined) {
 					nativeArgs = {
@@ -551,6 +559,12 @@ export class NativeToolCallParser {
 					nativeArgs = {
 						todos: partialArgs.todos,
 					}
+				}
+				break
+
+			case "record_lesson":
+				if (partialArgs.lesson !== undefined) {
+					nativeArgs = { lesson: partialArgs.lesson }
 				}
 				break
 
@@ -872,6 +886,12 @@ export class NativeToolCallParser {
 					}
 					break
 
+				case "select_active_intent":
+					if (args.intent_id !== undefined) {
+						nativeArgs = { intent_id: args.intent_id } as NativeArgsFor<TName>
+					}
+					break
+
 				case "switch_mode":
 					if (args.mode_slug !== undefined && args.reason !== undefined) {
 						nativeArgs = {
@@ -886,6 +906,12 @@ export class NativeToolCallParser {
 						nativeArgs = {
 							todos: args.todos,
 						} as NativeArgsFor<TName>
+					}
+					break
+
+				case "record_lesson":
+					if (args.lesson !== undefined) {
+						nativeArgs = { lesson: args.lesson } as NativeArgsFor<TName>
 					}
 					break
 
@@ -905,6 +931,8 @@ export class NativeToolCallParser {
 						nativeArgs = {
 							path: args.path,
 							content: args.content,
+							intent_id: args.intent_id,
+							mutation_class: args.mutation_class,
 						} as NativeArgsFor<TName>
 					}
 					break
