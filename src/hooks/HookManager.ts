@@ -36,6 +36,10 @@ export class HookManager {
 		}
 	}
 
+	/**
+	 * Pre-write gate: intent + scope + optimistic lock only when .orchestration/ exists.
+	 * When absent, validateIntentForWrite returns allowed: true immediately (no-op).
+	 */
 	async preWriteFile(
 		task: Task,
 		relPath: string,
@@ -44,6 +48,11 @@ export class HookManager {
 		return validateIntentForWrite(task, relPath, args)
 	}
 
+	/**
+	 * Post-write: append trace record. Best-effort only—trace append failure does not
+	 * change the reported success of the write (file is already written). Ensures
+	 * cross-cutting trace logic cannot block or fail existing write workflows.
+	 */
 	async postWriteFile(
 		task: Task,
 		relPath: string,
@@ -58,17 +67,21 @@ export class HookManager {
 		},
 	): Promise<PostHookResult> {
 		if (!(await orchestrationExists(task.cwd))) return { success: true }
-		await appendWriteTrace({
-			cwd: task.cwd,
-			relPath,
-			content,
-			intent_id: opts.intent_id,
-			mutation_class: opts.mutation_class,
-			startLine: opts.startLine,
-			endLine: opts.endLine,
-			sessionLogId: opts.sessionLogId,
-			modelId: opts.modelId,
-		})
+		try {
+			await appendWriteTrace({
+				cwd: task.cwd,
+				relPath,
+				content,
+				intent_id: opts.intent_id,
+				mutation_class: opts.mutation_class,
+				startLine: opts.startLine,
+				endLine: opts.endLine,
+				sessionLogId: opts.sessionLogId,
+				modelId: opts.modelId,
+			})
+		} catch (err) {
+			console.warn("[orchestration] Trace append failed; write already succeeded.", err)
+		}
 		return { success: true }
 	}
 

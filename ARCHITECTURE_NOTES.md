@@ -56,3 +56,13 @@ Hooks are synchronous and in-process. No event bus; tools call the manager direc
 ## Scalability Considerations
 
 **Trace size:** Append-only; query by intent or file is O(n) in lines. For large n, consider indexing or archival. **Intent count:** active_intents is read per pre-hook; file is small. **Parallel panels:** Shared .orchestration/; optimistic locking prevents overwriting the same file when another agent or user changed it. **Context window:** Single-intent injection and optional read of CLAUDE.md keep token growth bounded.
+
+## Risk Mitigation and Behavioral Guarantees
+
+Cross-cutting validation and trace logic is designed so existing workflows are unchanged when orchestration is off, and write success is never reported as failure due to trace/scope/locking implementation details.
+
+1. **No-op when .orchestration/ is absent:** Every hook path checks `orchestrationExists(cwd)` first. When the directory is missing, pre-hooks return `allowed: true` and post-hooks return `success: true` without running intent, scope, or trace logic. No new validation gates or metadata are applied; write_to_file and other tools behave as before.
+
+2. **Trace append is best-effort:** The file write is performed by the tool before postWriteFile runs. If appending to agent_trace.jsonl fails (e.g. disk full, permissions), the failure is caught in HookManager.postWriteFile, logged with `console.warn`, and the hook still returns `success: true`. The user-facing tool result reflects the successful write; the trace record for that write may be missing. Trace does not block or fail the write path.
+
+3. **Scope and locking only when orchestration is enabled:** Intent requirement, owned_scope, .intentignore, and read-hash (optimistic lock) checks run only after `orchestrationExists(cwd)` is true. The stale-file check blocks only when a read-hash was previously set for that path (e.g. same task read-then-write); if no read-hash exists, the write is not blocked. Review and testing should focus on workspaces that have .orchestration/ and active intents; others are unchanged.

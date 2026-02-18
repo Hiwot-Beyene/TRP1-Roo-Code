@@ -60,6 +60,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			return
 		}
 
+		// Gate: when .orchestration/ exists, intent + scope + optimistic lock; else no-op (allowed).
 		const preWrite = await hookEngine.preWriteFile(task, relPath, {
 			intent_id: params.intent_id,
 			mutation_class: params.mutation_class,
@@ -193,6 +194,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 			const intentId = params.intent_id ?? getActiveIntentId(task)
 			const mutationClass = params.mutation_class ?? "AST_REFACTOR"
+			// Trace append is best-effort; post-hook does not affect reported success.
 			if (intentId) {
 				await hookEngine.postWriteFile(task, relPath, newContent, {
 					intent_id: intentId,

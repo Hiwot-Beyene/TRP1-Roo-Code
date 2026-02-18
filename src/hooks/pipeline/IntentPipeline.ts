@@ -16,6 +16,12 @@ export interface WriteGateResult {
 	message?: string
 }
 
+/**
+ * Write gate: intent, scope, .intentignore, optimistic lock. Only runs when
+ * .orchestration/ exists; otherwise returns allowed: true so existing write
+ * behavior is unchanged. Stale-file check only blocks when a read-hash was
+ * previously set for this path (same-task read-then-write).
+ */
 export async function validateIntentForWrite(
 	task: Task,
 	relPath: string,

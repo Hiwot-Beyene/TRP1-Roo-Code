@@ -30,6 +30,10 @@ ${criteria}
 </intent_context>`
 }
 
+/**
+ * When .orchestration/ is absent, returns allowed immediately so existing workflows
+ * and tool protocol are unchanged. No validation gates or metadata required.
+ */
 export async function getIntentContext(cwd: string, intentId: string): Promise<IntentContextResult> {
 	if (!(await orchestrationExists(cwd))) {
 		return { allowed: true, message: "Orchestration not configured; intent not required." }
