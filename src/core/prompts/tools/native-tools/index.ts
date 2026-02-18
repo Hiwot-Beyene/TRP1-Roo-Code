@@ -11,8 +11,10 @@ import generateImage from "./generate_image"
 import listFiles from "./list_files"
 import newTask from "./new_task"
 import readCommandOutput from "./read_command_output"
+import recordLesson from "./record_lesson"
 import { createReadFileTool, type ReadFileToolOptions } from "./read_file"
 import runSlashCommand from "./run_slash_command"
+import selectActiveIntent from "./select_active_intent"
 import skill from "./skill"
 import searchReplace from "./search_replace"
 import edit_file from "./edit_file"
@@ -58,8 +60,10 @@ export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.Ch
 		listFiles,
 		newTask,
 		readCommandOutput,
+		recordLesson,
 		createReadFileTool(readFileOptions),
 		runSlashCommand,
+		selectActiveIntent,
 		skill,
 		searchReplace,
 		edit_file,

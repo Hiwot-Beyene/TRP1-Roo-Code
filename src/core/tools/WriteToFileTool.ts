@@ -15,12 +15,17 @@ import { unescapeHtmlEntities } from "../../utils/text-normalization"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { convertNewFileToUnifiedDiff, computeDiffStats, sanitizeUnifiedDiff } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
+import type { MutationClass } from "../../hooks/orchestration-types"
+import { hookEngine, getActiveIntentId, setReadHash } from "../../hooks/HookEngine"
+import { contentHashPrefix } from "../../hooks/content-hash"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
 interface WriteToFileParams {
 	path: string
 	content: string
+	intent_id?: string
+	mutation_class?: MutationClass
 }
 
 export class WriteToFileTool extends BaseTool<"write_to_file"> {
@@ -52,6 +57,18 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		if (!accessAllowed) {
 			await task.say("rooignore_error", relPath)
 			pushToolResult(formatResponse.rooIgnoreError(relPath))
+			return
+		}
+
+		const preWrite = await hookEngine.preWriteFile(task, relPath, {
+			intent_id: params.intent_id,
+			mutation_class: params.mutation_class,
+		})
+		if (!preWrite.allowed) {
+			task.consecutiveMistakeCount++
+			task.recordToolError("write_to_file")
+			pushToolResult(formatResponse.toolError(preWrite.message ?? "Write blocked by orchestration."))
+			await task.diffViewProvider.reset()
 			return
 		}
 
@@ -113,6 +130,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 				if (fileExists) {
 					const absolutePath = path.resolve(task.cwd, relPath)
 					task.diffViewProvider.originalContent = await fs.readFile(absolutePath, "utf-8")
+					setReadHash(task, relPath, contentHashPrefix(task.diffViewProvider.originalContent))
 				} else {
 					task.diffViewProvider.originalContent = ""
 				}
@@ -171,6 +189,19 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			}
+
+			const intentId = params.intent_id ?? getActiveIntentId(task)
+			const mutationClass = params.mutation_class ?? "AST_REFACTOR"
+			if (intentId) {
+				await hookEngine.postWriteFile(task, relPath, newContent, {
+					intent_id: intentId,
+					mutation_class: mutationClass,
+					startLine: 1,
+					endLine: newContent.split("\n").length,
+					sessionLogId: task.lastMessageTs?.toString(),
+					modelId: task.api.getModel().id,
+				})
 			}
 
 			task.didEditFile = true

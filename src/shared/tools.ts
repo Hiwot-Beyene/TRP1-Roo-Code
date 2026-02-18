@@ -114,7 +114,14 @@ export type NativeToolArgs = {
 	switch_mode: { mode_slug: string; reason: string }
 	update_todo_list: { todos: string }
 	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, unknown> }
-	write_to_file: { path: string; content: string }
+	write_to_file: {
+		path: string
+		content: string
+		intent_id?: string
+		mutation_class?: "AST_REFACTOR" | "INTENT_EVOLUTION"
+	}
+	select_active_intent: { intent_id: string }
+	record_lesson: { lesson: string }
 	// Add more tools as they are migrated to native protocol
 }
 
@@ -265,6 +272,7 @@ export type ToolGroupConfig = {
 }
 
 export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
+	select_active_intent: "select active intent",
 	execute_command: "run commands",
 	read_file: "read files",
 	read_command_output: "read command output",
@@ -288,6 +296,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	run_slash_command: "run slash command",
 	skill: "load skill",
 	generate_image: "generate images",
+	record_lesson: "record lesson to CLAUDE.md",
 	custom_tool: "use custom tools",
 } as const
 
@@ -307,7 +316,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupConfig> = {
 		tools: ["use_mcp_tool", "access_mcp_resource"],
 	},
 	modes: {
-		tools: ["switch_mode", "new_task"],
+		tools: ["switch_mode", "new_task", "select_active_intent", "record_lesson"],
 		alwaysAvailable: true,
 	},
 }
