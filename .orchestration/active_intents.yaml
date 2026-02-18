@@ -1,0 +1,25 @@
+# TRP1 Week 1: Intent specification (machine-managed)
+# Update: Pre-Hook (on select_active_intent) / Post-Hook (on task complete)
+active_intents:
+  - id: "INT-001"
+    name: "Build Weather API"
+    status: "IN_PROGRESS"
+    owned_scope:
+      - "src/**"
+      - "*.ts"
+    constraints:
+      - "Use TypeScript"
+      - "No external auth for demo"
+    acceptance_criteria:
+      - "API returns weather for a given city"
+  - id: "INT-002"
+    name: "JWT Authentication Migration"
+    status: "DRAFT"
+    owned_scope:
+      - "src/auth/**"
+      - "src/middleware/jwt.ts"
+    constraints:
+      - "Must not use external auth providers"
+      - "Must maintain backward compatibility with Basic Auth"
+    acceptance_criteria:
+      - "Unit tests in tests/auth/ pass"

@@ -22,6 +22,7 @@ export type ToolGroup = z.infer<typeof toolGroupsSchema>
  */
 
 export const toolNames = [
+	"select_active_intent",
 	"execute_command",
 	"read_file",
 	"read_command_output",
@@ -45,6 +46,7 @@ export const toolNames = [
 	"run_slash_command",
 	"skill",
 	"generate_image",
+	"record_lesson",
 	"custom_tool",
 ] as const
 
