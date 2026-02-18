@@ -16,6 +16,7 @@ import {
 	getRulesSection,
 	getSystemInfoSection,
 	getObjectiveSection,
+	getIntentProtocolSection,
 	getSharedToolUseSection,
 	getToolUseGuidelinesSection,
 	getCapabilitiesSection,
@@ -97,6 +98,8 @@ ${skillsSection ? `\n${skillsSection}` : ""}
 ${getRulesSection(cwd, settings)}
 
 ${getSystemInfoSection(cwd)}
+
+${getIntentProtocolSection()}
 
 ${getObjectiveSection()}
 
