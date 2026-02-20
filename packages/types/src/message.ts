@@ -135,6 +135,7 @@ export function isNonBlockingAsk(ask: ClineAsk): ask is NonBlockingAsk {
  * - `subtask_result`: Result of a completed subtask
  * - `checkpoint_saved`: Indicates a checkpoint has been saved
  * - `rooignore_error`: Error related to .rooignore file processing
+ * - `gatekeeper_blocked`: Orchestration gate blocked write (no active intent); show in popup
  * - `diff_error`: Error occurred while applying a diff/patch
  * - `condense_context`: Context condensation/summarization has started
  * - `condense_context_error`: Error occurred during context condensation
@@ -162,6 +163,7 @@ export const clineSays = [
 	"subtask_result",
 	"checkpoint_saved",
 	"rooignore_error",
+	"gatekeeper_blocked",
 	"diff_error",
 	"condense_context",
 	"condense_context_error",
