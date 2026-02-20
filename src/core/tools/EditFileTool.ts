@@ -14,6 +14,7 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { hookEngine } from "../../hooks/HookEngine"
 
 interface EditFileParams {
 	file_path: string
@@ -214,6 +215,17 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 				task.didToolFailInCurrentTurn = true
 				await task.say("rooignore_error", relPath)
 				pushToolResult(formatResponse.rooIgnoreError(relPath))
+				return
+			}
+
+			// Gatekeeper: require valid intent when .orchestration/ exists
+			const preWrite = await hookEngine.preWriteFile(task, relPath, {})
+			if (!preWrite.allowed) {
+				await finalizePartialToolAskIfNeeded(relPath)
+				task.consecutiveMistakeCount++
+				task.recordToolError("edit_file")
+				task.didToolFailInCurrentTurn = true
+				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
 			}
 
