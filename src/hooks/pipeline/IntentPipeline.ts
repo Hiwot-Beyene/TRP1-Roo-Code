@@ -20,8 +20,8 @@ export interface WriteGateResult {
 	message?: string
 }
 
-/** Short message for UI (Error Details dialog and inline error). Use for task.say("error", ...). */
-export const GATEKEEPER_BLOCKED_DISPLAY_MESSAGE = "Gatekeeper Blocked: No Active Intent ID"
+/** Phase 1: exact error per spec — "block execution and return an error: 'You must cite a valid active Intent ID.'" */
+export const GATEKEEPER_BLOCKED_DISPLAY_MESSAGE = "You must cite a valid active Intent ID."
 
 /**
  * Write gate: intent, scope, .intentignore, optimistic lock. Only runs when
@@ -39,17 +39,13 @@ export async function validateIntentForWrite(
 
 	const intentId = args.intent_id ?? getActiveIntentId(task)
 	if (!intentId) {
-		return {
-			allowed: false,
-			message:
-				"You must cite a valid active Intent ID before writing files. Call select_active_intent(intent_id) first, then use write_to_file with intent_id in the arguments.",
-		}
+		return { allowed: false, message: "You must cite a valid active Intent ID." }
 	}
 
 	const doc = await readActiveIntents(cwd)
 	const intent = findIntentById(doc, intentId)
 	if (!intent) {
-		return { allowed: false, message: `Invalid intent_id: "${intentId}". Not found in active_intents.yaml.` }
+		return { allowed: false, message: "You must cite a valid active Intent ID." }
 	}
 
 	const ignorePatterns = await readIntentIgnore(cwd)

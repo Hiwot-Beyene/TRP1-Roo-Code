@@ -25,9 +25,8 @@ import { isFileWritingCommand } from "../../hooks/command-classify"
 import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
-/** Full instruction for the model in tool result. */
-const INTENT_GATE_MESSAGE =
-	"You must cite a valid active Intent ID before writing files. Call select_active_intent(intent_id) first, then use write_to_file with intent_id in the arguments."
+/** Phase 1: exact error per spec — "return an error: 'You must cite a valid active Intent ID.'" */
+const INTENT_GATE_MESSAGE = "You must cite a valid active Intent ID."
 
 class ShellIntegrationError extends Error {}
 

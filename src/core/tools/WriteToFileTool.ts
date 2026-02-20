@@ -71,7 +71,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			task.recordToolError("write_to_file")
 			task.gatekeeperBlockedThisTurn = true
 			await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
-			pushToolResult(formatResponse.toolError(preWrite.message ?? "Write blocked by orchestration."))
+			pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 			await task.diffViewProvider.reset()
 			return
 		}
