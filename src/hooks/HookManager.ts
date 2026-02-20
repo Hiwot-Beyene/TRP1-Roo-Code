@@ -1,14 +1,13 @@
 /**
- * Hook manager: facade over context layer, correlation service, and intent pipeline.
- * Isolated middleware; tools call the manager, not the execution loop.
- * Composable and fail-safe: each hook returns a result; no throws for business rules.
+ * Hook manager: facade over context layer and the hook registry.
+ * Tools call the manager; pre/post write behavior is delegated to the registry so
+ * hooks can be registered and ordered without changing this class or host logic.
  */
 import * as vscode from "vscode"
 import type { MutationClass, PostWriteTraceOpts } from "./orchestration-types"
-import { orchestrationExists, appendClaudeLesson } from "./orchestration-io"
+import { appendClaudeLesson } from "./orchestration-io"
 import { getIntentContext } from "./context/ContextLayer"
-import { appendWriteTrace } from "./correlation/CorrelationService"
-import { validateIntentForWrite } from "./pipeline/IntentPipeline"
+import { hookRegistry } from "./HookRegistry"
 import { classifyCommand as classifyCommandKind } from "./command-classify"
 import type { Task } from "../core/task/Task"
 import type { ActiveIntent } from "./orchestration-types"
@@ -41,21 +40,20 @@ export class HookManager {
 	}
 
 	/**
-	 * Pre-write gate: intent + scope + optimistic lock only when .orchestration/ exists.
-	 * When absent, validateIntentForWrite returns allowed: true immediately (no-op).
+	 * Pre-write: run all registered pre-write hooks in order. First hook that
+	 * returns allowed: false blocks the write (interceptor pattern).
 	 */
 	async preWriteFile(
 		task: Task,
 		relPath: string,
 		args: { intent_id?: string; mutation_class?: MutationClass },
 	): Promise<PreHookResult> {
-		return validateIntentForWrite(task, relPath, args)
+		return hookRegistry.runPreWriteHooks(task, relPath, args)
 	}
 
 	/**
-	 * Post-write: append trace record. Best-effort only—trace append failure does not
-	 * change the reported success of the write (file is already written). Ensures
-	 * cross-cutting trace logic cannot block or fail existing write workflows.
+	 * Post-write: run all registered post-write hooks in order. Best-effort;
+	 * hook failures are logged and do not change the reported success.
 	 */
 	async postWriteFile(
 		task: Task,
@@ -63,23 +61,7 @@ export class HookManager {
 		content: string,
 		opts: PostWriteTraceOpts,
 	): Promise<PostHookResult> {
-		if (!(await orchestrationExists(task.cwd))) return { success: true }
-		try {
-			await appendWriteTrace({
-				cwd: task.cwd,
-				relPath,
-				content,
-				intent_id: opts.intent_id,
-				mutation_class: opts.mutation_class,
-				startLine: opts.startLine,
-				endLine: opts.endLine,
-				sessionLogId: opts.sessionLogId,
-				modelId: opts.modelId,
-			})
-		} catch (err) {
-			console.warn("[orchestration] Trace append failed; write already succeeded.", err)
-		}
-		return { success: true }
+		return hookRegistry.runPostWriteHooks(task, relPath, content, opts)
 	}
 
 	async requestHITLForIntentEvolution(message: string): Promise<boolean> {

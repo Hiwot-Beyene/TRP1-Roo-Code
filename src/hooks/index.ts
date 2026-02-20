@@ -1,6 +1,12 @@
+import { registerDefaultHooks } from "./default-hooks"
+
+registerDefaultHooks()
+
 export { hookEngine, getActiveIntentId, setActiveIntentId, setReadHash, getReadHash } from "./HookEngine"
 export type { HookContext, PreHookResult, PostHookResult } from "./HookEngine"
 export { hookManager } from "./HookManager"
+export { hookRegistry, HookRegistry } from "./HookRegistry"
+export type { IPreWriteHook, IPostWriteHook, HookOrder } from "./HookRegistry"
 export { getIntentContext, buildIntentContextXml } from "./context/ContextLayer"
 export { getLastUserMessageText, promptMatchesIntent } from "./prompt-intent-match"
 export type { MessageLike } from "./prompt-intent-match"
