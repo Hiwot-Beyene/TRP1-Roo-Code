@@ -22,8 +22,10 @@ import { getTaskDirectoryPath } from "../../utils/storage"
 import { orchestrationExists } from "../../hooks/orchestration-io"
 import { getActiveIntentId } from "../../hooks/taskState"
 import { isFileWritingCommand } from "../../hooks/command-classify"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
+/** Full instruction for the model in tool result. */
 const INTENT_GATE_MESSAGE =
 	"You must cite a valid active Intent ID before writing files. Call select_active_intent(intent_id) first, then use write_to_file with intent_id in the arguments."
 
@@ -65,7 +67,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				if (!intentId) {
 					task.consecutiveMistakeCount++
 					task.recordToolError("execute_command")
-					await task.say("error", INTENT_GATE_MESSAGE)
+					await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 					pushToolResult(formatResponse.toolError(INTENT_GATE_MESSAGE))
 					return
 				}

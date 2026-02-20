@@ -16,6 +16,9 @@ export interface WriteGateResult {
 	message?: string
 }
 
+/** Short message for UI (Error Details dialog and inline error). Use for task.say("error", ...). */
+export const GATEKEEPER_BLOCKED_DISPLAY_MESSAGE = "Gatekeeper Blocked: No Active Intent ID"
+
 /**
  * Write gate: intent, scope, .intentignore, optimistic lock. Only runs when
  * .orchestration/ exists; otherwise returns allowed: true so existing write
