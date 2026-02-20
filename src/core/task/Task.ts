@@ -351,6 +351,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	userMessageContentReady = false
 
 	/**
+	 * When true, the intent gate blocked a write this turn. We flush tool results to history
+	 * and stop without requesting another model response (no suggestions, no follow-up).
+	 */
+	gatekeeperBlockedThisTurn = false
+
+	/**
 	 * Flag indicating whether the assistant message for the current streaming session
 	 * has been saved to API conversation history.
 	 *
@@ -2526,6 +2532,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const currentUserContent = currentItem.userContent
 			const currentIncludeFileDetails = currentItem.includeFileDetails
 
+			// Reset so a new request never sees a stale gatekeeper block from a previous turn
+			this.gatekeeperBlockedThisTurn = false
+
 			if (this.abort) {
 				throw new Error(`[RooCode#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 			}
@@ -3613,6 +3622,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					} else {
 						// Reset counter when tools are used successfully
 						this.consecutiveNoToolUseCount = 0
+					}
+
+					// When the gatekeeper blocked a write, stop here: flush tool results to history
+					// and do not request another model response (no suggestions or follow-up).
+					if (this.gatekeeperBlockedThisTurn) {
+						this.gatekeeperBlockedThisTurn = false
+						await this.flushPendingToolResultsToHistory()
+						continue
 					}
 
 					// Push to stack if there's content OR if we're paused waiting for a subtask.

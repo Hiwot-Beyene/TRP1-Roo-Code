@@ -34,6 +34,9 @@ import {
 	ImageMemoryTracker,
 } from "./helpers/imageHelpers"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { orchestrationExists } from "../../hooks/orchestration-io"
+import { setReadHash } from "../../hooks/HookEngine"
+import { contentHashPrefix } from "../../hooks/content-hash"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -219,6 +222,11 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 					const result = this.processTextFile(fileContent, entry)
 
 					await task.fileContextTracker.trackFileContext(relPath, "read_tool" as RecordSource)
+
+					// Phase 4: optimistic locking — store hash when agent reads so write gate can detect stale file
+					if (await orchestrationExists(task.cwd)) {
+						setReadHash(task, relPath, contentHashPrefix(fileContent))
+					}
 
 					updateFileResult(relPath, {
 						nativeContent: `File: ${relPath}\n${result}`,
@@ -792,6 +800,11 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 					if (result.wasTruncated) {
 						content += `\n\n[File truncated: showing ${result.returnedLines} of ${result.totalLines} total lines]`
 					}
+				}
+
+				// Phase 4: optimistic locking — store hash when agent reads so write gate can detect stale file
+				if (await orchestrationExists(task.cwd)) {
+					setReadHash(task, relPath, contentHashPrefix(rawContent))
 				}
 
 				results.push(`File: ${relPath}\n${content}`)

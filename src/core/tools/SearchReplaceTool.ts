@@ -84,6 +84,7 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 			if (!preWrite.allowed) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("search_replace")
+				task.gatekeeperBlockedThisTurn = true
 				await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
