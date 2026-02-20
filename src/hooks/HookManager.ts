@@ -11,11 +11,14 @@ import { appendWriteTrace } from "./correlation/CorrelationService"
 import { validateIntentForWrite } from "./pipeline/IntentPipeline"
 import { classifyCommand as classifyCommandKind } from "./command-classify"
 import type { Task } from "../core/task/Task"
+import type { ActiveIntent } from "./orchestration-types"
 
 export interface PreHookResult {
 	allowed: boolean
 	message?: string
 	injectedContext?: string
+	/** Set when allowed and orchestration is enabled; used for prompt-vs-intent matching. */
+	intent?: ActiveIntent
 }
 
 export interface PostHookResult {
@@ -33,6 +36,7 @@ export class HookManager {
 			allowed: result.allowed,
 			message: result.message,
 			injectedContext: result.injectedContext,
+			intent: result.intent,
 		}
 	}
 

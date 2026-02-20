@@ -3,6 +3,7 @@ import { formatResponse } from "../prompts/responses"
 import type { ToolUse } from "../../shared/tools"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { hookEngine, setActiveIntentId } from "../../hooks/HookEngine"
+import { getLastUserMessageText, promptMatchesIntent } from "../../hooks/prompt-intent-match"
 
 interface SelectActiveIntentParams {
 	intent_id: string
@@ -31,6 +32,18 @@ export class SelectActiveIntentTool extends BaseTool<"select_active_intent"> {
 			task.recordToolError("select_active_intent")
 			pushToolResult(formatResponse.toolError(result.message ?? "Intent selection denied."))
 			return
+		}
+
+		// Check whether the user's prompt text matches the selected intent
+		if (result.intent) {
+			const userMessageText = getLastUserMessageText(task.apiConversationHistory)
+			const { match, reason } = promptMatchesIntent(userMessageText, result.intent)
+			if (!match && reason) {
+				task.consecutiveMistakeCount++
+				task.recordToolError("select_active_intent")
+				pushToolResult(formatResponse.toolError(reason))
+				return
+			}
 		}
 
 		task.consecutiveMistakeCount = 0
