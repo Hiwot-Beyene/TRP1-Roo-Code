@@ -1,6 +1,7 @@
 /**
- * Intent-code correlation: append trace records (Intent ID → content hash)
- * and optionally query intent→files from the ledger. Machine-readable only.
+ * Intent-code correlation: append trace records to agent_trace.jsonl (Agent Trace Schema).
+ * Each record includes: intent_id (REQ-ID), mutation_class, files[].conversations[].ranges[].content_hash
+ * (SHA-256 prefix), and related: [{ type: "specification", value: intent_id }]. Machine-readable only.
  */
 import { randomUUID } from "crypto"
 import type { AgentTraceRecord, MutationClass } from "../orchestration-types"

@@ -1,6 +1,10 @@
 /**
  * Intent detection pipeline: validate intent ID against context DB, then
  * load and return curated context. Gate for "agent must reference context before acting".
+ *
+ * Phase 2 boundaries: .intentignore excludes paths from the selected intent's scope;
+ * owned_scope enforces which files the intent is authorized to edit (scope violation
+ * returns "Scope Violation: {intent_id} is not authorized to edit [filename].").
  */
 import path from "path"
 import fs from "fs/promises"
