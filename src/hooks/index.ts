@@ -2,6 +2,8 @@ export { hookEngine, getActiveIntentId, setActiveIntentId, setReadHash, getReadH
 export type { HookContext, PreHookResult, PostHookResult } from "./HookEngine"
 export { hookManager } from "./HookManager"
 export { getIntentContext, buildIntentContextXml } from "./context/ContextLayer"
+export { getLastUserMessageText, promptMatchesIntent } from "./prompt-intent-match"
+export type { MessageLike } from "./prompt-intent-match"
 export { appendWriteTrace } from "./correlation/CorrelationService"
 export { validateIntentForWrite } from "./pipeline/IntentPipeline"
 export {
