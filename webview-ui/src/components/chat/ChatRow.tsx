@@ -1286,6 +1286,16 @@ export const ChatRowContent = ({
 							/>
 						</div>
 					)
+				case "gatekeeper_blocked":
+					return (
+						<ErrorRow
+							type="error"
+							title={t("chat:errorDetails.title")}
+							message={message.text || ""}
+							errorDetails={message.text}
+							openDetailsDialogByDefault={true}
+						/>
+					)
 				case "error":
 					// Check if this is a model response error based on marker strings from backend
 					const isNoToolsUsedError = message.text === "MODEL_NO_TOOLS_USED"
