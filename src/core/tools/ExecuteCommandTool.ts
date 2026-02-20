@@ -67,6 +67,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				if (!intentId) {
 					task.consecutiveMistakeCount++
 					task.recordToolError("execute_command")
+					task.gatekeeperBlockedThisTurn = true
 					await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 					pushToolResult(formatResponse.toolError(INTENT_GATE_MESSAGE))
 					return

@@ -79,6 +79,7 @@ export class EditTool extends BaseTool<"edit"> {
 			if (!preWrite.allowed) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("edit")
+				task.gatekeeperBlockedThisTurn = true
 				await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
