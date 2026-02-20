@@ -15,6 +15,7 @@ import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { hookEngine } from "../../hooks/HookEngine"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 
 interface EditParams {
 	file_path: string
@@ -78,6 +79,7 @@ export class EditTool extends BaseTool<"edit"> {
 			if (!preWrite.allowed) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("edit")
+				await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
 			}

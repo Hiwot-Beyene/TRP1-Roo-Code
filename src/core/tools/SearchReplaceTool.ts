@@ -15,6 +15,7 @@ import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { hookEngine } from "../../hooks/HookEngine"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 
 interface SearchReplaceParams {
 	file_path: string
@@ -83,6 +84,7 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 			if (!preWrite.allowed) {
 				task.consecutiveMistakeCount++
 				task.recordToolError("search_replace")
+				await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
 			}

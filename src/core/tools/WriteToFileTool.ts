@@ -17,6 +17,7 @@ import { convertNewFileToUnifiedDiff, computeDiffStats, sanitizeUnifiedDiff } fr
 import type { ToolUse } from "../../shared/tools"
 import type { MutationClass } from "../../hooks/orchestration-types"
 import { hookEngine, getActiveIntentId, setReadHash } from "../../hooks/HookEngine"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 import { contentHashPrefix } from "../../hooks/content-hash"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -68,6 +69,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		if (!preWrite.allowed) {
 			task.consecutiveMistakeCount++
 			task.recordToolError("write_to_file")
+			await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 			pushToolResult(formatResponse.toolError(preWrite.message ?? "Write blocked by orchestration."))
 			await task.diffViewProvider.reset()
 			return

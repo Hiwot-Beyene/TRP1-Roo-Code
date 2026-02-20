@@ -16,6 +16,7 @@ import type { ToolUse } from "../../shared/tools"
 import { parsePatch, ParseError, processAllHunks } from "./apply-patch"
 import type { ApplyPatchFileChange } from "./apply-patch"
 import { hookEngine } from "../../hooks/HookEngine"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 
 interface ApplyPatchParams {
 	patch: string
@@ -121,6 +122,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				if (!preWrite.allowed) {
 					task.consecutiveMistakeCount++
 					task.recordToolError("apply_patch")
+					await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 					pushToolResult(
 						formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."),
 					)
