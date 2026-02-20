@@ -11,10 +11,11 @@ The extension adds an intent-code traceability and orchestration layer on top of
 | **ClineProvider / Task**    | Conversation state, cwd, API config. Holds active intent ID and read-hash map (set by HookManager).                                       |
 | **presentAssistantMessage** | Iterates assistant blocks; dispatches tool_use to tool.handle(). No hook logic.                                                           |
 | **HookEngine**              | Public API for hooks. Facade that delegates to HookManager.                                                                               |
-| **HookManager**             | Implements pre/post hooks; holds get/set for active intent and read-hash; delegates to ContextLayer, IntentPipeline, CorrelationService.  |
+| **HookManager**             | Facade: pre/post write delegate to HookRegistry; holds get/set for active intent and read-hash; delegates to ContextLayer for select_active_intent. |
+| **HookRegistry**            | Interceptor registry: ordered pre/post write hooks (IPreWriteHook, IPostWriteHook). Register hooks without changing HookManager or host. Default hooks (intent pipeline, trace) registered at load. |
 | **ContextLayer**            | getIntentContext(cwd, intentId): read active_intents, find intent, return allowed + injectedContext (XML). buildIntentContextXml(intent). |
-| **IntentPipeline**          | validateIntentForWrite(task, relPath, args): intent present, in catalog, path in scope, not in .intentignore, optimistic lock.            |
-| **CorrelationService**      | appendWriteTrace(input): build AgentTraceRecord, append to agent_trace.jsonl.                                                             |
+| **IntentPipeline**          | validateIntentForWrite(task, relPath, args): intent present, in catalog, path in scope, not in .intentignore, optimistic lock. Implemented as first pre-write hook. |
+| **CorrelationService**      | appendWriteTrace(input): build AgentTraceRecord, append to agent_trace.jsonl. Implemented as first post-write hook.                       |
 | **orchestration-io**        | Paths and read/write for .orchestration/\* and .intentignore.                                                                             |
 | **content-hash**            | contentHashPrefix(content): deterministic SHA-256 prefix.                                                                                 |
 | **scope-match**             | pathMatchesScope(relPath, patterns): path vs glob patterns.                                                                               |
@@ -26,12 +27,12 @@ The agent is not a single process; it is **Task + presentAssistantMessage + tool
 ## Hook Lifecycle
 
 1. **Trigger:** Tool invocation (e.g. WriteToFileTool.execute).
-2. **Pre phase:** Tool calls hookEngine.preWriteFile(task, relPath, args). HookManager runs validateIntentForWrite (IntentPipeline). Returns { allowed, message? }. If !allowed, tool pushes message and returns; no file write.
+2. **Pre phase:** Tool calls hookEngine.preWriteFile(task, relPath, args). HookManager delegates to HookRegistry.runPreWriteHooks(), which runs all registered IPreWriteHook instances in order; first hook that returns allowed: false short-circuits. Default hook: IntentPipeline (validateIntentForWrite). Returns { allowed, message? }. If !allowed, tool pushes message and returns; no file write.
 3. **Tool action:** If allowed, tool performs diff, approval, file write.
-4. **Post phase:** Tool calls hookEngine.postWriteFile(task, relPath, content, opts). HookManager runs appendWriteTrace (CorrelationService). One record appended to agent_trace.jsonl.
+4. **Post phase:** Tool calls hookEngine.postWriteFile(task, relPath, content, opts). HookManager delegates to HookRegistry.runPostWriteHooks(); all IPostWriteHook instances run in order (best-effort). Default hook: append trace (CorrelationService). One record appended to agent_trace.jsonl.
 5. **Agent notification:** Tool pushes a result string to the conversation (success or error from pre-hook).
 
-Hooks are synchronous and in-process. No event bus; tools call the manager directly.
+Hooks are synchronous and in-process. No event bus; tools call the manager directly. **Pluggable hooks:** Implement IPreWriteHook or IPostWriteHook and call hookRegistry.registerPreWriteHook(hook, order) or registerPostWriteHook(hook, order) (e.g. in extension activation) to add behavior without changing HookManager or host logic.
 
 ## Intent Detection Pipeline
 
