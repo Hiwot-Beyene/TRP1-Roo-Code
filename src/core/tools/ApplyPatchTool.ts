@@ -15,6 +15,7 @@ import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import { parsePatch, ParseError, processAllHunks } from "./apply-patch"
 import type { ApplyPatchFileChange } from "./apply-patch"
+import { hookEngine } from "../../hooks/HookEngine"
 
 interface ApplyPatchParams {
 	patch: string
@@ -112,6 +113,17 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				if (!accessAllowed) {
 					await task.say("rooignore_error", relPath)
 					pushToolResult(formatResponse.rooIgnoreError(relPath))
+					return
+				}
+
+				// Gatekeeper: require valid intent when .orchestration/ exists
+				const preWrite = await hookEngine.preWriteFile(task, relPath, {})
+				if (!preWrite.allowed) {
+					task.consecutiveMistakeCount++
+					task.recordToolError("apply_patch")
+					pushToolResult(
+						formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."),
+					)
 					return
 				}
 
