@@ -1,6 +1,6 @@
 import type OpenAI from "openai"
 
-const DESCRIPTION = `Append a "Lesson Learned" to .orchestration/CLAUDE.md for the shared brain. Call this when a verification step (linter, test) fails or when making an architectural decision that parallel agents should know.`
+const DESCRIPTION = `Append a "Lesson Learned" to .orchestration/CLAUDE.md for the shared brain (parallel orchestration). You MUST call this when a verification step (linter or test) fails: record what failed and how to fix it so other agents avoid the same mistake. Also call when making an architectural decision that parallel agents should know.`
 
 export default {
 	type: "function",

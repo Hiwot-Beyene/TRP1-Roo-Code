@@ -24,5 +24,7 @@ Active intent IDs (use one of these with select_active_intent): ${intentIds}
 2. The tool returns an <intent_context> block with scope, constraints, and acceptance criteria. After receiving it, you may proceed with read_file, write_to_file, or other tools. For write_to_file you must pass intent_id and mutation_class (AST_REFACTOR for syntax/structure changes within the same intent; INTENT_EVOLUTION for new behavior or features).
 3. Only edit files that fall within the owned_scope of the selected intent. Scope violations are blocked. If you need to change a file outside that scope, request scope expansion or a new intent.
 4. Files listed in .intentignore are excluded from the selected intent's scope; do not edit them under that intent.
+5. Concurrency (parallel agents): If a write is rejected with "Stale File: [path] was modified since you read it", another agent or the user changed the file. Re-read the file with read_file and then retry your edit.
+6. Lesson recording: When a verification step (linter or test) fails, call record_lesson(lesson) to append the lesson to .orchestration/CLAUDE.md so parallel agents can avoid the same failure.
 `
 }
