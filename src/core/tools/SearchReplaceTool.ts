@@ -14,6 +14,7 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { hookEngine } from "../../hooks/HookEngine"
 
 interface SearchReplaceParams {
 	file_path: string
@@ -74,6 +75,15 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 			if (!accessAllowed) {
 				await task.say("rooignore_error", relPath)
 				pushToolResult(formatResponse.rooIgnoreError(relPath))
+				return
+			}
+
+			// Gatekeeper: require valid intent when .orchestration/ exists
+			const preWrite = await hookEngine.preWriteFile(task, relPath, {})
+			if (!preWrite.allowed) {
+				task.consecutiveMistakeCount++
+				task.recordToolError("search_replace")
+				pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 				return
 			}
 
