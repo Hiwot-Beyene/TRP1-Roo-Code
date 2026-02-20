@@ -16,6 +16,7 @@ import {
 	getRulesSection,
 	getSystemInfoSection,
 	getObjectiveSection,
+	getReasoningLoopSection,
 	getIntentProtocolSection,
 	getSharedToolUseSection,
 	getToolUseGuidelinesSection,
@@ -25,6 +26,12 @@ import {
 	markdownFormattingSection,
 	getSkillsSection,
 } from "./sections"
+
+/**
+ * PROMPT BUILDER: This file is where the System Prompt is constructed for the LLM.
+ * To enforce the Reasoning Loop or change any instructions given to the model,
+ * add or edit sections in generatePrompt() below (and/or add section helpers in ./sections).
+ */
 
 // Helper function to get prompt component, filtering out empty objects
 export function getPromptComponent(
@@ -98,6 +105,8 @@ ${skillsSection ? `\n${skillsSection}` : ""}
 ${getRulesSection(cwd, settings)}
 
 ${getSystemInfoSection(cwd)}
+
+${getReasoningLoopSection()}
 
 ${await getIntentProtocolSection(cwd)}
 
