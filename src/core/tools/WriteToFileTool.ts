@@ -69,7 +69,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		if (!preWrite.allowed) {
 			task.consecutiveMistakeCount++
 			task.recordToolError("write_to_file")
-			await task.say("error", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
+			await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
 			pushToolResult(formatResponse.toolError(preWrite.message ?? "Write blocked by orchestration."))
 			await task.diffViewProvider.reset()
 			return
