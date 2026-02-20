@@ -5,7 +5,7 @@ export { getIntentContext, buildIntentContextXml } from "./context/ContextLayer"
 export { getLastUserMessageText, promptMatchesIntent } from "./prompt-intent-match"
 export type { MessageLike } from "./prompt-intent-match"
 export { appendWriteTrace } from "./correlation/CorrelationService"
-export { validateIntentForWrite } from "./pipeline/IntentPipeline"
+export { validateIntentForWrite, GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "./pipeline/IntentPipeline"
 export {
 	HookPhase,
 	type HookContract,
