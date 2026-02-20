@@ -99,7 +99,7 @@ ${getRulesSection(cwd, settings)}
 
 ${getSystemInfoSection(cwd)}
 
-${getIntentProtocolSection()}
+${await getIntentProtocolSection(cwd)}
 
 ${getObjectiveSection()}
 
