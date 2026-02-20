@@ -41,6 +41,10 @@ Hooks are synchronous and in-process. No event bus; tools call the manager direc
 
 **Trace record:** Each write produces one AgentTraceRecord: id, timestamp, vcs.revision_id, intent_id, mutation_class, files[].relative_path, files[].conversations[].ranges[].content_hash, files[].conversations[].related (type "specification", value intent_id). **Content hash:** SHA-256 of the written content (UTF-8), prefix "sha256:" + first 32 hex chars. **Correlation:** To get “code for intent I,” scan agent_trace.jsonl for records where intent_id === I; collect (relative_path, content_hash, mutation_class). Machine-readable only; intent_map.md is a human-readable summary.
 
+## Prompt Builder (System Prompt Construction)
+
+**Location:** The system prompt given to the LLM is built in **`src/core/prompts/system.ts`**. The exported `SYSTEM_PROMPT` async function calls `generatePrompt()`, which concatenates all sections. To enforce the Reasoning Loop or change any instructions given to the model, add or edit section helpers in **`src/core/prompts/sections/`** and include them in `generatePrompt()`. Sections include: role definition, tool use, capabilities, rules, system info, **reasoning loop**, intent protocol (when .orchestration/ exists), objective, and custom instructions. The Task obtains the prompt via `getSystemPrompt()` which calls `SYSTEM_PROMPT(...)`.
+
 ## Context Enrichment Strategy
 
 **System prompt:** Includes an intent protocol section: when .orchestration/ exists, the model must call select_active_intent before writing and must pass intent_id and mutation_class in write_to_file. **Injection:** Only the selected intent’s data (id, name, status, owned_scope, constraints, acceptance_criteria) is returned as the tool result of select_active_intent. No full active_intents dump. **CLAUDE.md:** Appended by record_lesson; the model can read_file when it needs shared lessons. Not auto-injected.
