@@ -53,6 +53,8 @@ export async function openFile(filePath: string, options: OpenFileOptions = {}) 
 		let successfulUri: vscode.Uri | undefined
 
 		for (const p of attemptPaths) {
+			// Skip VS Code backup paths to avoid ENOENT when backup was cleaned up
+			if (p.includes("Backups") || p.includes("backups")) continue
 			try {
 				const tempUri = vscode.Uri.file(p)
 				fileStat = await vscode.workspace.fs.stat(tempUri)
