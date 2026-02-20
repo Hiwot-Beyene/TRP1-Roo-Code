@@ -19,7 +19,13 @@ import { OutputInterceptor } from "../../integrations/terminal/OutputInterceptor
 import { Package } from "../../shared/package"
 import { t } from "../../i18n"
 import { getTaskDirectoryPath } from "../../utils/storage"
+import { orchestrationExists } from "../../hooks/orchestration-io"
+import { getActiveIntentId } from "../../hooks/taskState"
+import { isFileWritingCommand } from "../../hooks/command-classify"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+
+const INTENT_GATE_MESSAGE =
+	"You must cite a valid active Intent ID before writing files. Call select_active_intent(intent_id) first, then use write_to_file with intent_id in the arguments."
 
 class ShellIntegrationError extends Error {}
 
@@ -51,6 +57,18 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				await task.say("rooignore_error", ignoredFileAttemptedToAccess)
 				pushToolResult(formatResponse.rooIgnoreError(ignoredFileAttemptedToAccess))
 				return
+			}
+
+			// Gatekeeper: when .orchestration/ exists, block file-writing commands without active intent
+			if ((await orchestrationExists(task.cwd)) && isFileWritingCommand(canonicalCommand)) {
+				const intentId = getActiveIntentId(task)
+				if (!intentId) {
+					task.consecutiveMistakeCount++
+					task.recordToolError("execute_command")
+					await task.say("error", INTENT_GATE_MESSAGE)
+					pushToolResult(formatResponse.toolError(INTENT_GATE_MESSAGE))
+					return
+				}
 			}
 
 			task.consecutiveMistakeCount = 0
