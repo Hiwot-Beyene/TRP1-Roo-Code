@@ -13,7 +13,8 @@ import { pathMatchesScope } from "../scope-match"
 import type { MutationClass } from "../orchestration-types"
 import { contentHashPrefix } from "../content-hash"
 import type { Task } from "../../core/task/Task"
-import { getActiveIntentId, getReadHash } from "../taskState"
+import { getActiveIntentId, getReadHash, setActiveIntentId } from "../taskState"
+import { getLastUserMessageText } from "../prompt-intent-match"
 
 export interface WriteGateResult {
 	allowed: boolean
@@ -37,12 +38,23 @@ export async function validateIntentForWrite(
 	const cwd = task.cwd
 	if (!(await orchestrationExists(cwd))) return { allowed: true }
 
-	const intentId = args.intent_id ?? getActiveIntentId(task)
+	const doc = await readActiveIntents(cwd)
+	let intentId = args.intent_id ?? getActiveIntentId(task)
+	if (!intentId) {
+		// Infer intent from last user message (e.g. "Work on INT-001") so trace can be recorded.
+		const userText = getLastUserMessageText(task.apiConversationHistory)
+		if (userText) {
+			const mentioned = doc.active_intents.filter((i) => userText.toLowerCase().includes(i.id.toLowerCase()))
+			if (mentioned.length === 1) {
+				intentId = mentioned[0].id
+				setActiveIntentId(task, intentId)
+			}
+		}
+	}
 	if (!intentId) {
 		return { allowed: false, message: "You must cite a valid active Intent ID." }
 	}
 
-	const doc = await readActiveIntents(cwd)
 	const intent = findIntentById(doc, intentId)
 	if (!intent) {
 		return { allowed: false, message: "You must cite a valid active Intent ID." }

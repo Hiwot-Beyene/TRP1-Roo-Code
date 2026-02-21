@@ -110,7 +110,16 @@ export async function presentAssistantMessage(cline: Task) {
 			// These are converted to the same execution path as use_mcp_tool but preserve
 			// their original name in API history
 			const mcpBlock = block as McpToolUse
-
+			const mcpToolCallId = mcpBlock.id
+			if (cline.gatekeeperBlockedThisTurn && mcpToolCallId) {
+				cline.pushToolResultToUserContent({
+					type: "tool_result",
+					tool_use_id: sanitizeToolUseId(mcpToolCallId),
+					content: formatResponse.toolError(GATEKEEPER_BLOCKED_DISPLAY_MESSAGE),
+					is_error: true,
+				})
+				break
+			}
 			if (cline.didRejectTool) {
 				// For native protocol, we must send a tool_result for every tool_use to avoid API errors
 				const toolCallId = mcpBlock.id
@@ -302,6 +311,16 @@ export async function presentAssistantMessage(cline: Task) {
 			// Native tool calling is the only supported tool calling mechanism.
 			// A tool_use block without an id is invalid and cannot be executed.
 			const toolCallId = (block as any).id as string | undefined
+			// Gatekeeper already blocked this turn: do not execute any more tools.
+			if (cline.gatekeeperBlockedThisTurn && toolCallId) {
+				cline.pushToolResultToUserContent({
+					type: "tool_result",
+					tool_use_id: sanitizeToolUseId(toolCallId),
+					content: formatResponse.toolError(GATEKEEPER_BLOCKED_DISPLAY_MESSAGE),
+					is_error: true,
+				})
+				break
+			}
 			if (!toolCallId) {
 				const errorMessage =
 					"Invalid tool call: missing tool_use.id. XML tool calls are no longer supported. Remove any XML tool markup (e.g. <read_file>...</read_file>) and use native tool calling instead."
@@ -961,8 +980,7 @@ export async function presentAssistantMessage(cline: Task) {
 		if (cline.gatekeeperBlockedThisTurn) {
 			for (let i = cline.currentStreamingContentIndex + 1; i < cline.assistantMessageContent.length; i++) {
 				const b = cline.assistantMessageContent[i]
-				const toolUseId =
-					(b.type === "tool_use" || b.type === "mcp_tool_use") && (b as ToolUse | McpToolUse).id
+				const toolUseId = (b.type === "tool_use" || b.type === "mcp_tool_use") && (b as ToolUse | McpToolUse).id
 				if (toolUseId) {
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
