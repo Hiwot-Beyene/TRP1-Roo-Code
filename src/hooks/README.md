@@ -16,11 +16,11 @@ Host (tools) still call `hookEngine.preWriteFile` / `hookEngine.postWriteFile`; 
 import { hookRegistry } from "./hooks"
 
 hookRegistry.registerPreWriteHook(
-  {
-    name: "my-gate",
-    execute: async (task, relPath, args) => ({ allowed: true }),
-  },
-  10  // order (default 0)
+	{
+		name: "my-gate",
+		execute: async (task, relPath, args) => ({ allowed: true }),
+	},
+	10, // order (default 0)
 )
 ```
 

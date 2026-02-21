@@ -6,19 +6,19 @@ The extension adds an intent-code traceability and orchestration layer on top of
 
 ## Core Components
 
-| Component                   | Responsibility                                                                                                                            |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClineProvider / Task**    | Conversation state, cwd, API config. Holds active intent ID and read-hash map (set by HookManager).                                       |
-| **presentAssistantMessage** | Iterates assistant blocks; dispatches tool_use to tool.handle(). No hook logic.                                                           |
-| **HookEngine**              | Public API for hooks. Facade that delegates to HookManager.                                                                               |
-| **HookManager**             | Facade: pre/post write delegate to HookRegistry; holds get/set for active intent and read-hash; delegates to ContextLayer for select_active_intent. |
+| Component                   | Responsibility                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClineProvider / Task**    | Conversation state, cwd, API config. Holds active intent ID and read-hash map (set by HookManager).                                                                                                 |
+| **presentAssistantMessage** | Iterates assistant blocks; dispatches tool_use to tool.handle(). No hook logic.                                                                                                                     |
+| **HookEngine**              | Public API for hooks. Facade that delegates to HookManager.                                                                                                                                         |
+| **HookManager**             | Facade: pre/post write delegate to HookRegistry; holds get/set for active intent and read-hash; delegates to ContextLayer for select_active_intent.                                                 |
 | **HookRegistry**            | Interceptor registry: ordered pre/post write hooks (IPreWriteHook, IPostWriteHook). Register hooks without changing HookManager or host. Default hooks (intent pipeline, trace) registered at load. |
-| **ContextLayer**            | getIntentContext(cwd, intentId): read active_intents, find intent, return allowed + injectedContext (XML). buildIntentContextXml(intent). |
-| **IntentPipeline**          | validateIntentForWrite(task, relPath, args): intent present, in catalog, path in scope, not in .intentignore, optimistic lock. Implemented as first pre-write hook. |
-| **CorrelationService**      | appendWriteTrace(input): build AgentTraceRecord, append to agent_trace.jsonl. Implemented as first post-write hook.                       |
-| **orchestration-io**        | Paths and read/write for .orchestration/\* and .intentignore.                                                                             |
-| **content-hash**            | contentHashPrefix(content): deterministic SHA-256 prefix.                                                                                 |
-| **scope-match**             | pathMatchesScope(relPath, patterns): path vs glob patterns.                                                                               |
+| **ContextLayer**            | getIntentContext(cwd, intentId): read active_intents, find intent, return allowed + injectedContext (XML). buildIntentContextXml(intent).                                                           |
+| **IntentPipeline**          | validateIntentForWrite(task, relPath, args): intent present, in catalog, path in scope, not in .intentignore, optimistic lock. Implemented as first pre-write hook.                                 |
+| **CorrelationService**      | appendWriteTrace(input): build AgentTraceRecord, append to agent_trace.jsonl. Implemented as first post-write hook.                                                                                 |
+| **orchestration-io**        | Paths and read/write for .orchestration/\* and .intentignore.                                                                                                                                       |
+| **content-hash**            | contentHashPrefix(content): deterministic SHA-256 prefix.                                                                                                                                           |
+| **scope-match**             | pathMatchesScope(relPath, patterns): path vs glob patterns.                                                                                                                                         |
 
 ## Agent Architecture
 

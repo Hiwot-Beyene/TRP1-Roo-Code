@@ -32,12 +32,7 @@ export interface IPreWriteHook {
 /** Pluggable post-write interceptor. Run after a file write; best-effort (e.g. trace append). */
 export interface IPostWriteHook {
 	readonly name?: string
-	execute(
-		task: Task,
-		relPath: string,
-		content: string,
-		opts: PostWriteTraceOpts,
-	): Promise<PostHookResult>
+	execute(task: Task, relPath: string, content: string, opts: PostWriteTraceOpts): Promise<PostHookResult>
 }
 
 /** Order for hook execution. Lower runs first. Default 0. */
