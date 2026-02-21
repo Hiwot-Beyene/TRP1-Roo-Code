@@ -14,18 +14,19 @@ const intentPipelinePreWriteHook: IPreWriteHook = {
 	execute: (task, relPath, args) => validateIntentForWrite(task, relPath, args),
 }
 
-/** Post-write: append to agent_trace.jsonl (Phase 3). */
+/** Post-write: append to agent_trace.jsonl (Phase 3). Only appends when intent_id is present. */
 const tracePostWriteHook: IPostWriteHook = {
 	name: "trace",
 	async execute(task, relPath, content, opts) {
 		if (!(await orchestrationExists(task.cwd))) return { success: true }
+		if (!opts.intent_id) return { success: true }
 		try {
 			await appendWriteTrace({
 				cwd: task.cwd,
 				relPath,
 				content,
 				intent_id: opts.intent_id,
-				mutation_class: opts.mutation_class,
+				mutation_class: opts.mutation_class ?? "AST_REFACTOR",
 				startLine: opts.startLine,
 				endLine: opts.endLine,
 				sessionLogId: opts.sessionLogId,
