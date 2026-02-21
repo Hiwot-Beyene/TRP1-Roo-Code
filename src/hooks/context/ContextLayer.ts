@@ -3,7 +3,7 @@
  * Single-intent injection only; no full dump. Agent must reference context before acting.
  */
 import type { ActiveIntent } from "../orchestration-types"
-import { readActiveIntents, findIntentById, orchestrationExists } from "../orchestration-io"
+import { readActiveIntents, findIntentById, orchestrationExists, readIntentMap } from "../orchestration-io"
 
 export interface IntentContextResult {
 	allowed: boolean
@@ -46,9 +46,14 @@ export async function getIntentContext(cwd: string, intentId: string): Promise<I
 			message: "You must cite a valid active Intent ID.",
 		}
 	}
+	let injectedContext = buildIntentContextXml(intent)
+	const planContent = await readIntentMap(cwd)
+	if (planContent.trim()) {
+		injectedContext += `\n<current_plan_from_intent_map>\nThe following is the current development plan from .orchestration/intent_map.md. Use it to guide your implementation for this intent.\n\n${planContent}\n</current_plan_from_intent_map>`
+	}
 	return {
 		allowed: true,
-		injectedContext: buildIntentContextXml(intent),
+		injectedContext,
 		intent,
 	}
 }
