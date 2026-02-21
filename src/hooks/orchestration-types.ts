@@ -16,8 +16,8 @@ export interface ActiveIntentsDoc {
 export type MutationClass = "AST_REFACTOR" | "INTENT_EVOLUTION"
 
 export interface PostWriteTraceOpts {
-	intent_id: string
-	mutation_class: MutationClass
+	intent_id?: string
+	mutation_class?: MutationClass
 	startLine?: number
 	endLine?: number
 	sessionLogId?: string
