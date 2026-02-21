@@ -3629,11 +3629,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					if (this.gatekeeperBlockedThisTurn) {
 						this.gatekeeperBlockedThisTurn = false
 						await this.flushPendingToolResultsToHistory()
-						continue
+						this.userMessageContent = []
+						break
 					}
 
 					// Push to stack if there's content OR if we're paused waiting for a subtask.
 					// When paused, we push an empty item so the loop continues to the pause check.
+					if (this.gatekeeperBlockedThisTurn) {
+						break
+					}
 					if (this.userMessageContent.length > 0 || this.isPaused) {
 						stack.push({
 							userContent: [...this.userMessageContent], // Create a copy to avoid mutation issues
