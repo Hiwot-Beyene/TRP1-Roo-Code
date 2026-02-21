@@ -69,6 +69,8 @@ export interface ErrorRowProps {
 	code?: number
 	docsURL?: string // Optional documentation link
 	errorDetails?: string // Optional detailed error message shown in modal
+	/** When true, open the Error Details dialog on mount (e.g. for gatekeeper blocks). */
+	openDetailsDialogByDefault?: boolean
 }
 
 /**
@@ -88,11 +90,12 @@ export const ErrorRow = memo(
 		docsURL,
 		code,
 		errorDetails,
+		openDetailsDialogByDefault = false,
 	}: ErrorRowProps) => {
 		const { t } = useTranslation()
 		const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 		const [showCopySuccess, setShowCopySuccess] = useState(false)
-		const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+		const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(openDetailsDialogByDefault)
 		const [showDetailsCopySuccess, setShowDetailsCopySuccess] = useState(false)
 		const { copyWithFeedback } = useCopyToClipboard()
 		const { version, apiConfiguration } = useExtensionState()

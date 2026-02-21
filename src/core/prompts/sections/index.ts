@@ -1,6 +1,7 @@
 export { getRulesSection } from "./rules"
 export { getSystemInfoSection } from "./system-info"
 export { getObjectiveSection } from "./objective"
+export { getReasoningLoopSection } from "./reasoning-loop"
 export { getIntentProtocolSection } from "./intent-protocol"
 export { addCustomInstructions } from "./custom-instructions"
 export { getSharedToolUseSection } from "./tool-use"

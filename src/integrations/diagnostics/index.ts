@@ -69,6 +69,13 @@ export function getNewDiagnostics(
 // // File: /path/to/file3.ts
 // // - New error in file3 (1:1)
 
+/** URIs we must not call workspace.fs.stat on (e.g. VS Code backup paths that may no longer exist). */
+function isUnstatableUri(uri: vscode.Uri): boolean {
+	if (uri.scheme !== "file") return true
+	const p = uri.fsPath
+	return p.includes("Backups") || p.includes("backups")
+}
+
 // will return empty string if no problems with the given severity are found
 export async function diagnosticsToProblemsString(
 	diagnostics: [vscode.Uri, vscode.Diagnostic[]][],
@@ -137,24 +144,28 @@ export async function diagnosticsToProblemsString(
 			const line = item.diagnostic.range.start.line + 1
 			const source = item.diagnostic.source ? `${item.diagnostic.source} ` : ""
 
-			// Pre-format the diagnostic text
+			// Pre-format the diagnostic text (skip stat for backup/non-file URIs to avoid ENOENT)
 			let diagnosticText = ""
-			try {
-				let fileStat = fileStats.get(item.uri)
-				if (!fileStat) {
-					fileStat = await vscode.workspace.fs.stat(item.uri)
-					fileStats.set(item.uri, fileStat)
-				}
-				if (fileStat.type === vscode.FileType.File) {
-					const document = documents.get(item.uri) || (await vscode.workspace.openTextDocument(item.uri))
-					documents.set(item.uri, document)
-					const lineContent = document.lineAt(item.diagnostic.range.start.line).text
-					diagnosticText = `\n- [${source}${label}] ${line} | ${lineContent} : ${item.diagnostic.message}`
-				} else {
-					diagnosticText = `\n- [${source}${label}] 1 | (directory) : ${item.diagnostic.message}`
-				}
-			} catch {
+			if (isUnstatableUri(item.uri)) {
 				diagnosticText = `\n- [${source}${label}] ${line} | (unavailable) : ${item.diagnostic.message}`
+			} else {
+				try {
+					let fileStat = fileStats.get(item.uri)
+					if (!fileStat) {
+						fileStat = await vscode.workspace.fs.stat(item.uri)
+						fileStats.set(item.uri, fileStat)
+					}
+					if (fileStat.type === vscode.FileType.File) {
+						const document = documents.get(item.uri) || (await vscode.workspace.openTextDocument(item.uri))
+						documents.set(item.uri, document)
+						const lineContent = document.lineAt(item.diagnostic.range.start.line).text
+						diagnosticText = `\n- [${source}${label}] ${line} | ${lineContent} : ${item.diagnostic.message}`
+					} else {
+						diagnosticText = `\n- [${source}${label}] 1 | (directory) : ${item.diagnostic.message}`
+					}
+				} catch {
+					diagnosticText = `\n- [${source}${label}] ${line} | (unavailable) : ${item.diagnostic.message}`
+				}
 			}
 
 			item.formattedText = diagnosticText
@@ -217,22 +228,26 @@ export async function diagnosticsToProblemsString(
 					}
 					const line = diagnostic.range.start.line + 1 // VSCode lines are 0-indexed
 					const source = diagnostic.source ? `${diagnostic.source} ` : ""
-					try {
-						let fileStat = fileStats.get(uri)
-						if (!fileStat) {
-							fileStat = await vscode.workspace.fs.stat(uri)
-							fileStats.set(uri, fileStat)
-						}
-						if (fileStat.type === vscode.FileType.File) {
-							const document = documents.get(uri) || (await vscode.workspace.openTextDocument(uri))
-							documents.set(uri, document)
-							const lineContent = document.lineAt(diagnostic.range.start.line).text
-							result += `\n- [${source}${label}] ${line} | ${lineContent} : ${diagnostic.message}`
-						} else {
-							result += `\n- [${source}${label}] 1 | (directory) : ${diagnostic.message}`
-						}
-					} catch {
+					if (isUnstatableUri(uri)) {
 						result += `\n- [${source}${label}] ${line} | (unavailable) : ${diagnostic.message}`
+					} else {
+						try {
+							let fileStat = fileStats.get(uri)
+							if (!fileStat) {
+								fileStat = await vscode.workspace.fs.stat(uri)
+								fileStats.set(uri, fileStat)
+							}
+							if (fileStat.type === vscode.FileType.File) {
+								const document = documents.get(uri) || (await vscode.workspace.openTextDocument(uri))
+								documents.set(uri, document)
+								const lineContent = document.lineAt(diagnostic.range.start.line).text
+								result += `\n- [${source}${label}] ${line} | ${lineContent} : ${diagnostic.message}`
+							} else {
+								result += `\n- [${source}${label}] 1 | (directory) : ${diagnostic.message}`
+							}
+						} catch {
+							result += `\n- [${source}${label}] ${line} | (unavailable) : ${diagnostic.message}`
+						}
 					}
 				}
 			}

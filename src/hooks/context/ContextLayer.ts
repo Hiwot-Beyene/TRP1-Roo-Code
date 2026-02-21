@@ -43,7 +43,7 @@ export async function getIntentContext(cwd: string, intentId: string): Promise<I
 	if (!intent) {
 		return {
 			allowed: false,
-			message: `You must cite a valid active Intent ID. "${intentId}" was not found in .orchestration/active_intents.yaml.`,
+			message: "You must cite a valid active Intent ID.",
 		}
 	}
 	return {

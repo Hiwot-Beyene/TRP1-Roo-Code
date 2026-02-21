@@ -15,6 +15,9 @@ import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import { parsePatch, ParseError, processAllHunks } from "./apply-patch"
 import type { ApplyPatchFileChange } from "./apply-patch"
+import { hookEngine, getActiveIntentId } from "../../hooks/HookEngine"
+import { orchestrationExists } from "../../hooks/orchestration-io"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 
 interface ApplyPatchParams {
 	patch: string
@@ -112,6 +115,19 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 				if (!accessAllowed) {
 					await task.say("rooignore_error", relPath)
 					pushToolResult(formatResponse.rooIgnoreError(relPath))
+					return
+				}
+
+				// Gatekeeper: require valid intent when .orchestration/ exists
+				const preWrite = await hookEngine.preWriteFile(task, relPath, {})
+				if (!preWrite.allowed) {
+					task.consecutiveMistakeCount++
+					task.recordToolError("apply_patch")
+					task.gatekeeperBlockedThisTurn = true
+					await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
+					pushToolResult(
+						formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."),
+					)
 					return
 				}
 
@@ -223,6 +239,21 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		// Track file edit operation
 		await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
 		task.didEditFile = true
+
+		// Post-write hook for orchestration trace
+		if (await orchestrationExists(task.cwd)) {
+			const intentId = getActiveIntentId(task)
+			if (intentId) {
+				await hookEngine.postWriteFile(task, relPath, newContent, {
+					intent_id: intentId,
+					mutation_class: "AST_REFACTOR",
+					startLine: 1,
+					endLine: newContent.split("\n").length,
+					sessionLogId: task.lastMessageTs?.toString(),
+					modelId: task.api.getModel().id,
+				})
+			}
+		}
 
 		const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, true)
 		pushToolResult(message)
@@ -430,6 +461,20 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)
+			// Post-write trace for moved file
+			if (await orchestrationExists(task.cwd)) {
+				const intentId = getActiveIntentId(task)
+				if (intentId) {
+					await hookEngine.postWriteFile(task, change.movePath, newContent, {
+						intent_id: intentId,
+						mutation_class: "AST_REFACTOR",
+						startLine: 1,
+						endLine: newContent.split("\n").length,
+						sessionLogId: task.lastMessageTs?.toString(),
+						modelId: task.api.getModel().id,
+					})
+				}
+			}
 		} else {
 			// Save changes to the same file
 			if (isPreventFocusDisruptionEnabled) {
@@ -439,6 +484,20 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			// Post-write trace for updated file
+			if (await orchestrationExists(task.cwd)) {
+				const intentId = getActiveIntentId(task)
+				if (intentId) {
+					await hookEngine.postWriteFile(task, relPath, newContent, {
+						intent_id: intentId,
+						mutation_class: "AST_REFACTOR",
+						startLine: 1,
+						endLine: newContent.split("\n").length,
+						sessionLogId: task.lastMessageTs?.toString(),
+						modelId: task.api.getModel().id,
+					})
+				}
+			}
 		}
 
 		task.didEditFile = true

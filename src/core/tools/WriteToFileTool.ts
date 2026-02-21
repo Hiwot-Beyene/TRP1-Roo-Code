@@ -17,6 +17,8 @@ import { convertNewFileToUnifiedDiff, computeDiffStats, sanitizeUnifiedDiff } fr
 import type { ToolUse } from "../../shared/tools"
 import type { MutationClass } from "../../hooks/orchestration-types"
 import { hookEngine, getActiveIntentId, setReadHash } from "../../hooks/HookEngine"
+import { orchestrationExists } from "../../hooks/orchestration-io"
+import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 import { contentHashPrefix } from "../../hooks/content-hash"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -68,7 +70,9 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		if (!preWrite.allowed) {
 			task.consecutiveMistakeCount++
 			task.recordToolError("write_to_file")
-			pushToolResult(formatResponse.toolError(preWrite.message ?? "Write blocked by orchestration."))
+			task.gatekeeperBlockedThisTurn = true
+			await task.say("gatekeeper_blocked", GATEKEEPER_BLOCKED_DISPLAY_MESSAGE)
+			pushToolResult(formatResponse.toolError(preWrite.message ?? "You must cite a valid active Intent ID."))
 			await task.diffViewProvider.reset()
 			return
 		}
@@ -194,8 +198,8 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 			const intentId = params.intent_id ?? getActiveIntentId(task)
 			const mutationClass = params.mutation_class ?? "AST_REFACTOR"
-			// Trace append is best-effort; post-hook does not affect reported success.
-			if (intentId) {
+			// When orchestration exists, run post-write hook (trace appends only when intent_id is set).
+			if (await orchestrationExists(task.cwd)) {
 				await hookEngine.postWriteFile(task, relPath, newContent, {
 					intent_id: intentId,
 					mutation_class: mutationClass,
