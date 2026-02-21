@@ -250,6 +250,14 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			return
 		}
 
+		if (await orchestrationExists(task.cwd)) {
+			const preWrite = await hookEngine.preWriteFile(task, relPath!, {
+				intent_id: block.params.intent_id,
+				mutation_class: block.params.mutation_class as MutationClass | undefined,
+			})
+			if (!preWrite.allowed) return
+		}
+
 		// relPath is guaranteed non-null after hasPathStabilized
 		let fileExists: boolean
 		const absolutePath = path.resolve(task.cwd, relPath!)
