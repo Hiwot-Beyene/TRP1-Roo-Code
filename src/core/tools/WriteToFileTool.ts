@@ -253,7 +253,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 		if (await orchestrationExists(task.cwd)) {
 			const preWrite = await hookEngine.preWriteFile(task, relPath!, {
 				intent_id: block.params.intent_id,
-				mutation_class: block.params.mutation_class,
+				mutation_class: block.params.mutation_class as MutationClass | undefined,
 			})
 			if (!preWrite.allowed) return
 		}

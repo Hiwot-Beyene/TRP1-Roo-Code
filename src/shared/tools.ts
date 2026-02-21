@@ -80,6 +80,9 @@ export const toolParamNames = [
 	// read_file legacy format parameter (backward compatibility)
 	"files",
 	"line_ranges",
+	// orchestration (write_to_file when .orchestration/ exists)
+	"intent_id",
+	"mutation_class",
 ] as const
 
 export type ToolParamName = (typeof toolParamNames)[number]
