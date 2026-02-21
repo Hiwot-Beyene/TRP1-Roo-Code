@@ -14,7 +14,8 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
-import { hookEngine } from "../../hooks/HookEngine"
+import { hookEngine, getActiveIntentId } from "../../hooks/HookEngine"
+import { orchestrationExists } from "../../hooks/orchestration-io"
 import { GATEKEEPER_BLOCKED_DISPLAY_MESSAGE } from "../../hooks/pipeline/IntentPipeline"
 
 interface SearchReplaceParams {
@@ -230,6 +231,21 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 			// Track file edit operation
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			}
+
+			// Post-write hook for orchestration trace
+			if (relPath && (await orchestrationExists(task.cwd))) {
+				const intentId = getActiveIntentId(task)
+				if (intentId) {
+					await hookEngine.postWriteFile(task, relPath, newContent, {
+						intent_id: intentId,
+						mutation_class: "AST_REFACTOR",
+						startLine: 1,
+						endLine: newContent.split("\n").length,
+						sessionLogId: task.lastMessageTs?.toString(),
+						modelId: task.api.getModel().id,
+					})
+				}
 			}
 
 			task.didEditFile = true
