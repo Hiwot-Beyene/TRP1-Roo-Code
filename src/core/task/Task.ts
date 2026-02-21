@@ -3627,14 +3627,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					// When the gatekeeper blocked a write, stop here: flush tool results to history
 					// and do not request another model response (no suggestions or follow-up).
 					if (this.gatekeeperBlockedThisTurn) {
-						this.gatekeeperBlockedThisTurn = false
 						await this.flushPendingToolResultsToHistory()
 						this.userMessageContent = []
 						break
 					}
 
-					// Push to stack if there's content OR if we're paused waiting for a subtask.
-					// When paused, we push an empty item so the loop continues to the pause check.
+					// Guard: do not push follow-up content (no extra API request) if gatekeeper blocked.
 					if (this.gatekeeperBlockedThisTurn) {
 						break
 					}
